@@ -1,3 +1,0 @@
-devs:amira,sarah,ahmed
-managers:admin1,admin2
-support:helpdesk1
