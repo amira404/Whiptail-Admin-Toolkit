@@ -87,7 +87,7 @@ Blue Team Path 👩‍💻🛡️SOC
 This project is open-source and available under the MIT License.
 # 1. Navigate to your project directory
 ```bash 
-cd /home/amiramohamed/whiptailFunctions
+cd /home/amiramohamed/Whiptail-Admin-Toolkit
  ```
 
 # 2. Initialize a new Git repository
@@ -97,7 +97,7 @@ git init
 
 # 3. Connect your local repo to GitHub (replace with your actual repo link if different)
 ```bash 
-git remote add origin https://github.com/amiramohamed/whiptail-admin-tools.git
+git remote add origin https://github.com/amiramohamed/Whiptail-Admin-Toolkit.git
 ```
 
 # 4. Add all files to the staging area
