@@ -1,0 +1,10 @@
+#!/bin/bash
+
+target=$(whiptail --title "Account Lock" --inputbox "Enter the username you want to lock:" 8 50 3>&1 1>&2 2>&3)
+
+if id "$target" &>/dev/null; then
+    usermod -L "$target"
+    whiptail --title "Account Locked" --msgbox "The account '$target' has been successfully locked." 8 50
+else
+    whiptail --title "User Not Found" --msgbox "No such user: '$target'" 8 50
+fi

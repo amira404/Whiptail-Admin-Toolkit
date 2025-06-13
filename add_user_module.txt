@@ -1,0 +1,62 @@
+#!/bin/bash
+
+create_single_user(){
+    new_user=$(whiptail --title "Create New User" --inputbox "Enter new username:" 8 50 3>&1 1>&2 2>&3)
+    if id "$new_user" &>/dev/null; then
+        whiptail --title "User Exists" --msgbox "The user '$new_user' already exists!" 8 50
+    else
+        new_pass=$(whiptail --title "Set Password" --passwordbox "Enter password for $new_user:" 8 50 3>&1 1>&2 2>&3)
+        useradd "$new_user"
+        echo "$new_pass" | passwd "$new_user" --stdin
+        whiptail --title "Success" --msgbox "User '$new_user' has been created successfully." 8 50
+    fi
+}
+
+import_users_from_file(){
+    path_to_file=$(whiptail --title "Import Users" --inputbox "Enter full file path:" 8 50 3>&1 1>&2 2>&3)
+    if [ -f "$path_to_file" ]; then
+        while IFS=',' read -r user login_name user_pass; do
+            if id "$user" &>/dev/null; then
+                original_name=$user
+                user="${user}_$RANDOM"
+                whiptail --title "Duplicate Found" --msgbox "'$original_name' already exists. Renaming to '$user'." 8 60
+            fi
+            useradd -c "$login_name" "$user"
+            echo "$user_pass" | passwd "$user" --stdin
+        done < "$path_to_file"
+        whiptail --title "Done" --msgbox "All users imported successfully." 8 50
+    else
+        whiptail --title "Error" --msgbox "File '$path_to_file' not found!" 8 50
+    fi
+}
+
+generate_bulk_users(){
+    base_name=$(whiptail --title "Bulk User Creation" --inputbox "Enter base name for users:" 8 50 3>&1 1>&2 2>&3)
+    total_users=$(whiptail --title "Bulk User Creation" --inputbox "How many users to create?" 8 50 3>&1 1>&2 2>&3)
+    save_file=$(whiptail --title "Save Credentials" --inputbox "Enter file name to save credentials (inside 'credentials/' folder):" 8 60 3>&1 1>&2 2>&3)
+
+    mkdir -p credentials
+    for ((i=1; i<=total_users; i++)); do
+        temp_user="$base_name"
+        if id "$base_name" &>/dev/null; then
+            temp_user="${base_name}_$RANDOM"
+            whiptail --title "Username Exists" --msgbox "Username '$base_name' exists. Renamed to '$temp_user'." 8 60
+        fi
+        useradd "$temp_user"
+        gen_pass=$(openssl rand -base64 6)
+        echo "$gen_pass" | passwd "$temp_user" --stdin
+        echo "$temp_user:$gen_pass" >> "credentials/$save_file"
+    done
+    whiptail --title "Completed" --msgbox "$total_users users created. Credentials saved to credentials/$save_file" 10 60
+}
+
+choice=$(whiptail --title "User Management" --menu "Select an option:" 15 60 3 \
+    "1" "Create single user" \
+    "2" "Import users from file" \
+    "3" "Generate multiple users" 3>&1 1>&2 2>&3)
+
+case $choice in
+    1) create_single_user ;;
+    2) import_users_from_file ;;
+    3) generate_bulk_users ;;
+esac

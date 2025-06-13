@@ -1,0 +1,10 @@
+#!/bin/bash
+
+target_user=$(whiptail --title "User Unlock Tool" --inputbox "Enter the username to unlock:" 8 50 3>&1 1>&2 2>&3)
+
+if getent passwd "$target_user" > /dev/null; then
+    usermod -U "$target_user"
+    whiptail --title "Unlocked" --msgbox "Account '$target_user' has been successfully unlocked." 8 50
+else
+    whiptail --title "User Not Found" --msgbox "The user '$target_user' does not exist in the system." 8 50
+fi

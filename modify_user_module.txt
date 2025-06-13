@@ -1,0 +1,51 @@
+#!/bin/bash
+
+user_to_edit=$(whiptail --title "User Editor" --inputbox "Enter the username to update:" 8 50 3>&1 1>&2 2>&3)
+
+if getent passwd "$user_to_edit" > /dev/null; then
+    selection=$(whiptail --title "User Modification" --menu "Select an option for '$user_to_edit':" 15 60 4 \
+        "1" "Rename user" \
+        "2" "Update UID" \
+        "3" "Add to group" \
+        "4" "Change login shell" 3>&1 1>&2 2>&3)
+
+    case $selection in
+        1)
+            new_user=$(whiptail --title "Rename User" --inputbox "Enter new username:" 8 50 3>&1 1>&2 2>&3)
+            if getent passwd "$new_user" > /dev/null; then
+                whiptail --title "Name Taken" --msgbox "Username '$new_user' is already in use." 8 50
+            else
+                usermod -l "$new_user" "$user_to_edit"
+                whiptail --title "Updated" --msgbox "Username changed to '$new_user'." 8 50
+            fi
+            ;;
+        2)
+            new_uid=$(whiptail --title "Change UID" --inputbox "Enter new UID for '$user_to_edit':" 8 50 3>&1 1>&2 2>&3)
+            if getent passwd | cut -d: -f3 | grep -qx "$new_uid"; then
+                whiptail --title "UID Exists" --msgbox "UID '$new_uid' is already assigned." 8 50
+            else
+                usermod -u "$new_uid" "$user_to_edit"
+                whiptail --title "Success" --msgbox "UID updated to '$new_uid'." 8 50
+            fi
+            ;;
+        3)
+            grp_name=$(whiptail --title "Add Group" --inputbox "Enter group name to add user to:" 8 50 3>&1 1>&2 2>&3)
+            if getent group "$grp_name" > /dev/null; then
+                usermod -aG "$grp_name" "$user_to_edit"
+                whiptail --title "Success" --msgbox "User '$user_to_edit' added to group '$grp_name'." 8 50
+            else
+                whiptail --title "Group Not Found" --msgbox "Group '$grp_name' does not exist." 8 50
+            fi
+            ;;
+        4)
+            shell_path=$(whiptail --title "Change Shell" --inputbox "Enter the full path to new shell:" 8 50 3>&1 1>&2 2>&3)
+            usermod -s "$shell_path" "$user_to_edit"
+            whiptail --title "Shell Updated" --msgbox "Shell changed to '$shell_path'." 8 50
+            ;;
+        *) 
+            whiptail --title "Invalid Choice" --msgbox "No valid option selected." 8 50
+            ;;
+    esac
+else
+    whiptail --title "User Not Found" --msgbox "User '$user_to_edit' does not exist on the system." 8 50
+fi

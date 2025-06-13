@@ -1,0 +1,32 @@
+#!/bin/bash
+
+grp_name=$(whiptail --title "Edit Group" --inputbox "Enter the name of the group to edit:" 8 50 3>&1 1>&2 2>&3)
+
+if getent group "$grp_name" > /dev/null; then
+    action=$(whiptail --title "Group Modification" --menu "Select an action for '$grp_name':" 15 60 2 \
+        "1" "Rename group" \
+        "2" "Update GID" 3>&1 1>&2 2>&3)
+
+    case $action in
+        1)
+            new_grp=$(whiptail --title "Rename Group" --inputbox "Enter the new group name:" 8 50 3>&1 1>&2 2>&3)
+            if getent group "$new_grp" > /dev/null; then
+                whiptail --title "Name Conflict" --msgbox "Group '$new_grp' already exists." 8 50
+            else
+                groupmod -n "$new_grp" "$grp_name"
+                whiptail --title "Success" --msgbox "Group '$grp_name' renamed to '$new_grp'." 8 50
+            fi
+            ;;
+        2)
+            new_gid=$(whiptail --title "Change Group ID" --inputbox "Enter a new GID for '$grp_name':" 8 50 3>&1 1>&2 2>&3)
+            if getent group | cut -d: -f3 | grep -q "^${new_gid}$"; then
+                whiptail --title "GID In Use" --msgbox "GID '$new_gid' is already assigned to another group." 8 50
+            else
+                groupmod -g "$new_gid" "$grp_name"
+                whiptail --title "Success" --msgbox "GID for '$grp_name' changed to '$new_gid'." 8 50
+            fi
+            ;;
+    esac
+else
+    whiptail --title "Group Not Found" --msgbox "Group '$grp_name' does not exist." 8 50
+fi

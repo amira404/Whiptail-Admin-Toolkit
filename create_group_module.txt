@@ -1,0 +1,50 @@
+#!/bin/bash
+
+create_group(){
+    group_name=$(whiptail --title "Create New Group" --inputbox "Enter the group name:" 8 50 3>&1 1>&2 2>&3)
+    if getent group "$group_name" > /dev/null; then
+        whiptail --title "Group Exists" --msgbox "Group '$group_name' already exists!" 8 50
+    else
+        groupadd "$group_name"
+        whiptail --title "Group Created" --msgbox "Group '$group_name' has been successfully created." 8 50
+    fi
+}
+
+import_groups(){
+    input_file=$(whiptail --title "Import Groups" --inputbox "Enter the full file path:" 8 50 3>&1 1>&2 2>&3)
+    if [ -f "$input_file" ]; then
+        while IFS=',' read -r grp members; do
+            if getent group "$grp" > /dev/null; then
+                whiptail --title "Group Exists" --msgbox "Group '$grp' already exists. Adding users to it." 8 60
+            else
+                groupadd "$grp"
+                whiptail --title "Group Added" --msgbox "Group '$grp' created. Proceeding to add users." 8 60
+            fi
+
+            IFS=',' read -ra user_array <<< "$members"
+            for usr in "${user_array[@]}"; do
+                if id "$usr" &>/dev/null; then
+                    gpasswd -a "$usr" "$grp"
+                else
+                    temp_user="${usr}_$RANDOM"
+                    whiptail --title "Creating User" --msgbox "User '$usr' not found. Creating as '$temp_user' with default password '1234'." 8 60
+                    useradd "$usr"
+                    echo "1234" | passwd "$usr" --stdin
+                    gpasswd -a "$usr" "$grp"
+                fi
+            done
+        done < "$input_file"
+        whiptail --title "Done" --msgbox "All groups and users processed successfully." 8 50
+    else
+        whiptail --title "File Error" --msgbox "Could not locate file: '$input_file'" 8 50
+    fi
+}
+
+selected_option=$(whiptail --title "Group Management" --menu "Select an action:" 15 60 2 \
+    "1" "Create a single group" \
+    "2" "Import groups and members from file" 3>&1 1>&2 2>&3)
+
+case $selected_option in
+    1) create_group ;;
+    2) import_groups ;;
+esac
