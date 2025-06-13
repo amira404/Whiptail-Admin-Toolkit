@@ -1,3 +1,0 @@
-amira1:pass123
-amira2:abc456
-amira3:xyz789
